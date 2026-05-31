@@ -162,6 +162,7 @@ private fun BandLockContent(
   modifier: Modifier = Modifier,
 ) {
   val snapshot = state.snapshot ?: return
+  val radioStatus = state.radioStatus
 
   Column(
     modifier = modifier
@@ -192,7 +193,18 @@ private fun BandLockContent(
         }
         Spacer(Modifier.height(12.dp))
         Text(
-          text = "Configured bands: ${formatBands(snapshot.selectedBands)}",
+          text = "Serving band: ${formatServingBand(radioStatus?.servingBand)}",
+          style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+          text = "Network: ${radioStatus?.networkType ?: "—"} • Signal bars: ${formatSignalBars(radioStatus?.webSignal)}",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+          text = "Lock selection: ${formatBands(snapshot.selectedBands)}",
           style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.height(4.dp))
@@ -304,4 +316,12 @@ private fun BandLockContent(
 private fun formatBands(bands: Collection<Int>): String {
   if (bands.isEmpty()) return "None"
   return bands.sorted().joinToString(separator = ", ") { band -> "B$band" }
+}
+
+private fun formatServingBand(band: Int?): String {
+  return band?.let { "B$it" } ?: "—"
+}
+
+private fun formatSignalBars(webSignal: Int?): String {
+  return webSignal?.toString() ?: "—"
 }

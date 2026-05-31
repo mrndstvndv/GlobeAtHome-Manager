@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 data class RouterResponse(
   val modem_main_state: String? = null,
   val network_type: String? = null,
+  val lte_band: String? = null,
   val sim_status: String? = null,
   val simcard_roam: String? = null,
   val lte_plmn: String? = null,
@@ -49,12 +50,13 @@ data class RouterResponse(
 data class DashboardData(
   val connected: Boolean,
   val networkType: String,
+  val servingBand: Int?,
   val wanIp: String,
   val sessionDuration: String,
   val rssi: Int,
   val rsrq: Int,
   val sinr: Float?,
-  val webSignal: Int,
+  val webSignal: Int?,
   val realtimeTxThrpt: Long,
   val realtimeRxThrpt: Long,
   val monthlyTxBytes: Long,
@@ -75,12 +77,13 @@ data class DashboardData(
       return DashboardData(
         connected = raw.isWanConnected(),
         networkType = raw.network_type ?: "—",
+        servingBand = raw.lte_band.toServingBand(),
         wanIp = raw.wan_ipaddr ?: "—",
         sessionDuration = formatSeconds(raw.realtime_time?.toLongOrNull()),
         rssi = rssi,
         rsrq = rsrq,
         sinr = sinr,
-        webSignal = raw.web_signal?.toIntOrNull() ?: 0,
+        webSignal = raw.web_signal?.toIntOrNull(),
         realtimeTxThrpt = raw.realtime_tx_thrpt?.toLongOrNull() ?: 0L,
         realtimeRxThrpt = raw.realtime_rx_thrpt?.toLongOrNull() ?: 0L,
         monthlyTxBytes = raw.monthly_tx_bytes?.toLongOrNull() ?: 0L,
@@ -106,6 +109,28 @@ data class DashboardData(
       }
     }
   }
+}
+
+data class RadioStatus(
+  val networkType: String,
+  val servingBand: Int?,
+  val webSignal: Int?,
+) {
+  companion object {
+    fun from(raw: RouterResponse): RadioStatus {
+      return RadioStatus(
+        networkType = raw.network_type ?: "—",
+        servingBand = raw.lte_band.toServingBand(),
+        webSignal = raw.web_signal?.toIntOrNull(),
+      )
+    }
+  }
+}
+
+internal fun String?.toServingBand(): Int? {
+  val value = this?.trim().orEmpty()
+  if (value.isBlank()) return null
+  return value.toIntOrNull()
 }
 
 internal fun RouterResponse.isWanConnected(): Boolean {

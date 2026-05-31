@@ -4,6 +4,7 @@ import com.example.globerouter.data.band.BandLockCodec
 import com.example.globerouter.data.models.BandLockSnapshot
 import com.example.globerouter.data.models.DashboardData
 import com.example.globerouter.data.models.LoginResponse
+import com.example.globerouter.data.models.RadioStatus
 import com.example.globerouter.data.models.RouterResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -71,7 +72,7 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
   suspend fun getDashboard(username: String, password: String): DashboardData {
     ensureLoggedIn(username, password)
     val raw = queryRaw(
-      "modem_main_state,network_type,lte_plmn,lte_rsrq,lte_rssi1,lte_sinr," +
+      "modem_main_state,network_type,lte_band,lte_plmn,lte_rsrq,lte_rssi1,lte_sinr," +
         "lte_pci,lte_enodebid,lte_cellid,wan_ipaddr,ppp_status," +
         "sta_count,m_sta_count,SSID1,m_SSID," +
         "realtime_tx_thrpt,realtime_rx_thrpt,realtime_tx_bytes,realtime_rx_bytes,realtime_time," +
@@ -85,7 +86,7 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
   /** Fetch just signal info. */
   suspend fun getSignal(username: String, password: String): RouterResponse {
     ensureLoggedIn(username, password)
-    val raw = queryRaw("lte_rsrq,lte_rssi1,lte_sinr,lte_pci,lte_enodebid,lte_cellid,web_signal,network_type,simcard_roam")
+    val raw = queryRaw("lte_band,lte_rsrq,lte_rssi1,lte_sinr,lte_pci,lte_enodebid,lte_cellid,web_signal,network_type,simcard_roam")
     return json.decodeFromString(raw)
   }
 
@@ -103,11 +104,19 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
   suspend fun getFastData(username: String, password: String): RouterResponse {
     ensureLoggedIn(username, password)
     val raw = queryRaw(
-      "lte_rsrq,lte_rssi1,lte_sinr,lte_pci,lte_enodebid,lte_cellid," +
+      "lte_band,lte_rsrq,lte_rssi1,lte_sinr,lte_pci,lte_enodebid,lte_cellid," +
         "web_signal,network_type,simcard_roam," +
         "realtime_tx_thrpt,realtime_rx_thrpt,realtime_tx_bytes,realtime_rx_bytes,realtime_time"
     )
     return json.decodeFromString(raw)
+  }
+
+  /** Read current radio status. */
+  suspend fun getRadioStatus(username: String, password: String): RadioStatus {
+    ensureLoggedIn(username, password)
+    val raw = queryRaw("network_type,lte_band,web_signal")
+    val response = json.decodeFromString<RouterResponse>(raw)
+    return RadioStatus.from(response)
   }
 
   /** Read current LTE band lock state. */

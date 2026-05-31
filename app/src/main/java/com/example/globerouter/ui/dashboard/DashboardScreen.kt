@@ -204,6 +204,11 @@ private fun StatusCard(data: DashboardData) {
           )
         }
         Spacer(Modifier.height(4.dp))
+        Text(
+          "Band: ${formatServingBand(data.servingBand)} • Signal bars: ${formatSignalBars(data.webSignal)}",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         Text("IP: ${data.wanIp}", style = MaterialTheme.typography.bodySmall)
         Text("Up: ${data.sessionDuration}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
       }
@@ -269,6 +274,14 @@ private fun signalColor(fraction: Float): Color = when {
   fraction >= 0.35f -> SignalFair
   fraction >= 0.2f -> SignalPoor
   else -> SignalBad
+}
+
+private fun formatServingBand(band: Int?): String {
+  return band?.let { "B$it" } ?: "—"
+}
+
+private fun formatSignalBars(webSignal: Int?): String {
+  return webSignal?.toString() ?: "—"
 }
 
 @Composable

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.globerouter.data.RouterApi
 import com.example.globerouter.data.models.BandLockSnapshot
 import com.example.globerouter.data.models.Credentials
+import com.example.globerouter.data.models.RadioStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,7 +34,8 @@ class BandLockViewModel : ViewModel() {
 
       try {
         val snapshot = api.getBandLockSnapshot(Credentials.username, Credentials.password)
-        showSnapshot(snapshot)
+        val radioStatus = api.getRadioStatus(Credentials.username, Credentials.password)
+        showState(snapshot, radioStatus)
       } catch (e: Exception) {
         _uiState.update {
           it.copy(
@@ -114,7 +116,8 @@ class BandLockViewModel : ViewModel() {
           password = Credentials.password,
           selectedBands = state.draftBands,
         )
-        showSnapshot(updated)
+        val radioStatus = api.getRadioStatus(Credentials.username, Credentials.password)
+        showState(updated, radioStatus)
       } catch (e: Exception) {
         _uiState.update {
           it.copy(
@@ -141,7 +144,8 @@ class BandLockViewModel : ViewModel() {
 
       try {
         val updated = api.disableBandLock(Credentials.username, Credentials.password)
-        showSnapshot(updated)
+        val radioStatus = api.getRadioStatus(Credentials.username, Credentials.password)
+        showState(updated, radioStatus)
       } catch (e: Exception) {
         _uiState.update {
           it.copy(
@@ -158,12 +162,16 @@ class BandLockViewModel : ViewModel() {
     api.close()
   }
 
-  private fun showSnapshot(snapshot: BandLockSnapshot) {
+  private fun showState(
+    snapshot: BandLockSnapshot,
+    radioStatus: RadioStatus,
+  ) {
     _uiState.value = BandLockUiState(
       isLoading = false,
       isRefreshing = false,
       isApplying = false,
       snapshot = snapshot,
+      radioStatus = radioStatus,
       draftBands = snapshot.selectedBands.toSet(),
       errorMessage = null,
     )
@@ -175,6 +183,7 @@ data class BandLockUiState(
   val isRefreshing: Boolean = false,
   val isApplying: Boolean = false,
   val snapshot: BandLockSnapshot? = null,
+  val radioStatus: RadioStatus? = null,
   val draftBands: Set<Int> = emptySet(),
   val errorMessage: String? = null,
 ) {

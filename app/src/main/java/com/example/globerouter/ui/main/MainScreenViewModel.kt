@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.globerouter.data.RouterApi
 import com.example.globerouter.data.models.Credentials
 import com.example.globerouter.data.models.DashboardData
+import com.example.globerouter.data.models.toServingBand
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +53,7 @@ class DashboardViewModel : ViewModel() {
           if (current != null) {
             val merged = current.copy(
               networkType = fast.network_type ?: current.networkType,
+              servingBand = fast.lte_band.toServingBand() ?: current.servingBand,
               rssi = fast.lte_rssi1?.toFloatOrNull()?.toInt() ?: fast.rssi?.toFloatOrNull()?.toInt() ?: current.rssi,
               rsrq = fast.lte_rsrq?.toFloatOrNull()?.toInt() ?: fast.rsrq?.toFloatOrNull()?.toInt() ?: current.rsrq,
               sinr = fast.lte_sinr?.toFloatOrNull() ?: fast.sinr?.toFloatOrNull() ?: current.sinr,
