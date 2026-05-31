@@ -4,16 +4,10 @@
    for details.
 -->
 <data-extraction-rules>
-    <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
-    </cloud-backup>
-    <!--
-    <device-transfer>
-        <include .../>
-        <exclude .../>
-    </device-transfer>
-    -->
+  <cloud-backup>
+    <exclude domain="sharedpref" path="globe_credentials.xml"/>
+  </cloud-backup>
+  <device-transfer>
+    <exclude domain="sharedpref" path="globe_credentials.xml"/>
+  </device-transfer>
 </data-extraction-rules>

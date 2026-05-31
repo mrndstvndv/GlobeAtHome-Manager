@@ -54,7 +54,7 @@ class DashboardViewModel : ViewModel() {
               networkType = fast.network_type ?: current.networkType,
               rssi = fast.lte_rssi1?.toFloatOrNull()?.toInt() ?: fast.rssi?.toFloatOrNull()?.toInt() ?: current.rssi,
               rsrq = fast.lte_rsrq?.toFloatOrNull()?.toInt() ?: fast.rsrq?.toFloatOrNull()?.toInt() ?: current.rsrq,
-              sinr = fast.lte_sinr?.toFloatOrNull()?.toInt() ?: fast.sinr?.toFloatOrNull()?.toInt() ?: current.sinr,
+              sinr = fast.lte_sinr?.toFloatOrNull() ?: fast.sinr?.toFloatOrNull() ?: current.sinr,
               webSignal = fast.web_signal?.toIntOrNull() ?: current.webSignal,
               realtimeTxThrpt = fast.realtime_tx_thrpt?.toLongOrNull() ?: current.realtimeTxThrpt,
               realtimeRxThrpt = fast.realtime_rx_thrpt?.toLongOrNull() ?: current.realtimeRxThrpt,

@@ -226,7 +226,7 @@ private fun SignalCard(data: DashboardData) {
       SignalBar("RSRQ", "${data.rsrq} dB", data.rsrq.toFloat(), -5f, -20f, invert = true)
       Spacer(Modifier.height(12.dp))
       if (data.sinr != null) {
-        SignalBar("SINR", "${data.sinr} dB", data.sinr.toFloat(), 30f, 0f, invert = false)
+        SignalBar("SINR", "%.1f dB".format(data.sinr), data.sinr, 30f, 0f, invert = false)
       } else {
         Text("SINR: —", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
       }

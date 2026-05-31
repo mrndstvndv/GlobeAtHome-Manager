@@ -53,7 +53,7 @@ data class DashboardData(
   val sessionDuration: String,
   val rssi: Int,
   val rsrq: Int,
-  val sinr: Int?,
+  val sinr: Float?,
   val webSignal: Int,
   val realtimeTxThrpt: Long,
   val realtimeRxThrpt: Long,
@@ -70,7 +70,7 @@ data class DashboardData(
     fun from(raw: RouterResponse): DashboardData {
       val rssi = raw.lte_rssi1?.toFloatOrNull()?.toInt() ?: raw.rssi?.toFloatOrNull()?.toInt() ?: -120
       val rsrq = raw.lte_rsrq?.toFloatOrNull()?.toInt() ?: raw.rsrq?.toFloatOrNull()?.toInt() ?: -20
-      val sinr = raw.lte_sinr?.toFloatOrNull()?.toInt() ?: raw.sinr?.toFloatOrNull()?.toInt()
+      val sinr = raw.lte_sinr?.toFloatOrNull() ?: raw.sinr?.toFloatOrNull()
 
       return DashboardData(
         connected = raw.modem_main_state == "0" && raw.ppp_status == "Connected",
