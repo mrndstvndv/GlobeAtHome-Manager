@@ -52,9 +52,9 @@ class DashboardViewModel : ViewModel() {
           if (current != null) {
             val merged = current.copy(
               networkType = fast.network_type ?: current.networkType,
-              rssi = fast.lte_rssi1?.toIntOrNull() ?: current.rssi,
-              rsrq = fast.lte_rsrq?.toIntOrNull() ?: current.rsrq,
-              sinr = fast.lte_sinr?.toIntOrNull() ?: current.sinr,
+              rssi = fast.lte_rssi1?.toFloatOrNull()?.toInt() ?: fast.rssi?.toFloatOrNull()?.toInt() ?: current.rssi,
+              rsrq = fast.lte_rsrq?.toFloatOrNull()?.toInt() ?: fast.rsrq?.toFloatOrNull()?.toInt() ?: current.rsrq,
+              sinr = fast.lte_sinr?.toFloatOrNull()?.toInt() ?: fast.sinr?.toFloatOrNull()?.toInt() ?: current.sinr,
               webSignal = fast.web_signal?.toIntOrNull() ?: current.webSignal,
               realtimeTxThrpt = fast.realtime_tx_thrpt?.toLongOrNull() ?: current.realtimeTxThrpt,
               realtimeRxThrpt = fast.realtime_rx_thrpt?.toLongOrNull() ?: current.realtimeRxThrpt,
@@ -117,7 +117,7 @@ class DashboardViewModel : ViewModel() {
   }
 
   companion object {
-    private const val FAST_INTERVAL_MS = 1_000L
+    private const val FAST_INTERVAL_MS = 500L
     private const val SLOW_INTERVAL_MS = 30_000L
   }
 }

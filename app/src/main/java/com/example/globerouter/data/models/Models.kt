@@ -11,8 +11,11 @@ data class RouterResponse(
   val simcard_roam: String? = null,
   val lte_plmn: String? = null,
   val lte_rsrq: String? = null,
+  val rsrq: String? = null,
   val lte_rssi1: String? = null,
+  val rssi: String? = null,
   val lte_sinr: String? = null,
+  val sinr: String? = null,
   val lte_pci: String? = null,
   val lte_enodebid: String? = null,
   val lte_cellid: String? = null,
@@ -50,7 +53,7 @@ data class DashboardData(
   val sessionDuration: String,
   val rssi: Int,
   val rsrq: Int,
-  val sinr: Int,
+  val sinr: Int?,
   val webSignal: Int,
   val realtimeTxThrpt: Long,
   val realtimeRxThrpt: Long,
@@ -65,9 +68,9 @@ data class DashboardData(
 ) {
   companion object {
     fun from(raw: RouterResponse): DashboardData {
-      val rssi = raw.lte_rssi1?.toIntOrNull() ?: -120
-      val rsrq = raw.lte_rsrq?.toIntOrNull() ?: -20
-      val sinr = raw.lte_sinr?.toIntOrNull() ?: 0
+      val rssi = raw.lte_rssi1?.toFloatOrNull()?.toInt() ?: raw.rssi?.toFloatOrNull()?.toInt() ?: -120
+      val rsrq = raw.lte_rsrq?.toFloatOrNull()?.toInt() ?: raw.rsrq?.toFloatOrNull()?.toInt() ?: -20
+      val sinr = raw.lte_sinr?.toFloatOrNull()?.toInt() ?: raw.sinr?.toFloatOrNull()?.toInt()
 
       return DashboardData(
         connected = raw.modem_main_state == "0" && raw.ppp_status == "Connected",
