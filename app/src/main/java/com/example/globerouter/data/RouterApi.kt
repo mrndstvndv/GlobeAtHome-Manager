@@ -1,7 +1,7 @@
 package com.example.globerouter.data
 
-import com.example.globerouter.data.models.BandLockInfo
-import com.example.globerouter.data.models.BandLockResponse
+import com.example.globerouter.data.band.BandLockCodec
+import com.example.globerouter.data.models.BandLockSnapshot
 import com.example.globerouter.data.models.DashboardData
 import com.example.globerouter.data.models.LoginResponse
 import com.example.globerouter.data.models.RouterResponse
@@ -15,10 +15,12 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.Parameters
 import io.ktor.http.contentType
+import io.ktor.http.formUrlEncode
 import java.io.IOException
-import kotlinx.serialization.json.Json
 import java.util.Base64
+import kotlinx.serialization.json.Json
 
 /** Ktor HTTP client for the Globe At Home B9680 router API. */
 class RouterApi(private val routerIp: String = DEFAULT_IP) {
@@ -40,15 +42,15 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
   suspend fun login(username: String, password: String): Boolean {
     val userB64 = Base64.getEncoder().encodeToString(username.encodeToByteArray())
     val passB64 = Base64.getEncoder().encodeToString(password.encodeToByteArray())
-
-    val response = client.post("$baseUrl/goform/goform_set_cmd_process") {
-      setBody("isTest=false&goformId=LOGIN&username=$userB64&password=$passB64")
-      contentType(ContentType.Application.FormUrlEncoded)
-    }
-
-    val body = response.bodyAsText()
-    val loginResp = json.decodeFromString<LoginResponse>(body)
-    return loginResp.result == "0"
+    val body = goformSet(
+      goformId = "LOGIN",
+      fields = mapOf(
+        "username" to userB64,
+        "password" to passB64,
+      ),
+    )
+    val loginResponse = json.decodeFromString<LoginResponse>(body)
+    return loginResponse.result == "0"
   }
 
   /** Check if the current session is still valid. */
@@ -59,10 +61,10 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
 
   /** Ensure we're logged in, re-authenticating if necessary. */
   suspend fun ensureLoggedIn(username: String, password: String) {
-    if (!checkSession()) {
-      val ok = login(username, password)
-      if (!ok) throw IOException("Login failed — check credentials")
-    }
+    if (checkSession()) return
+
+    val loggedIn = login(username, password)
+    if (!loggedIn) throw IOException("Login failed — check credentials")
   }
 
   /** Fetch dashboard data (status + signal + traffic in one call). */
@@ -76,8 +78,8 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
         "monthly_tx_bytes,monthly_rx_bytes,monthly_time," +
         "cr_version,hardware_version,mac_address,msisdn,web_signal,sim_status,simcard_roam"
     )
-    val resp = json.decodeFromString<RouterResponse>(raw)
-    return DashboardData.from(resp)
+    val response = json.decodeFromString<RouterResponse>(raw)
+    return DashboardData.from(response)
   }
 
   /** Fetch just signal info. */
@@ -97,7 +99,7 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
     return json.decodeFromString(raw)
   }
 
-  /** Fast poll: signal + realtime traffic in one call (1s interval). */
+  /** Fast poll: signal + real-time traffic in one call (1s interval). */
   suspend fun getFastData(username: String, password: String): RouterResponse {
     ensureLoggedIn(username, password)
     val raw = queryRaw(
@@ -108,54 +110,142 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
     return json.decodeFromString(raw)
   }
 
-  /** Get current LTE band lock status. */
-  suspend fun getBandLock(username: String, password: String): BandLockInfo {
+  /** Read current LTE band lock state. */
+  suspend fun getBandLockSnapshot(username: String, password: String): BandLockSnapshot {
     ensureLoggedIn(username, password)
-    val body = client.post("$baseUrl/goform/goform_set_cmd_process") {
-      setBody("isTest=false&goformId=TZ_GET_LOCK_BAND")
-      contentType(ContentType.Application.FormUrlEncoded)
-    }.bodyAsText()
-    val resp = json.decodeFromString<BandLockResponse>(body)
-    return BandLockInfo.from(resp)
+    return loadBandLockSnapshot()
+  }
+
+  /** Apply a new LTE band lock selection. */
+  suspend fun setBandLock(
+    username: String,
+    password: String,
+    selectedBands: Set<Int>,
+  ): BandLockSnapshot {
+    ensureLoggedIn(username, password)
+
+    val currentSnapshot = loadBandLockSnapshot()
+    val payload = BandLockCodec.buildPayload(
+      enabled = true,
+      selectedBands = selectedBands,
+      snapshot = currentSnapshot,
+    )
+
+    goformSet("TZ_SET_LOCK_BAND", payload.asFields())
+
+    val updatedSnapshot = loadBandLockSnapshot()
+    validateBandLock(updatedSnapshot, expectedEnabled = true, expectedBands = selectedBands)
+    return updatedSnapshot
+  }
+
+  /** Disable LTE band lock while preserving the router's other lock fields. */
+  suspend fun disableBandLock(username: String, password: String): BandLockSnapshot {
+    ensureLoggedIn(username, password)
+
+    val currentSnapshot = loadBandLockSnapshot()
+    val payload = BandLockCodec.buildPayload(
+      enabled = false,
+      selectedBands = emptySet(),
+      snapshot = currentSnapshot,
+    )
+
+    goformSet("TZ_SET_LOCK_BAND", payload.asFields())
+
+    val updatedSnapshot = loadBandLockSnapshot()
+    validateBandLock(updatedSnapshot, expectedEnabled = false, expectedBands = emptySet())
+    return updatedSnapshot
   }
 
   /** Reboot the router. */
   suspend fun reboot(username: String, password: String) {
     ensureLoggedIn(username, password)
-    client.post("$baseUrl/goform/goform_set_cmd_process") {
-      setBody("isTest=false&goformId=REBOOT_DEVICE")
-      contentType(ContentType.Application.FormUrlEncoded)
-    }
+    goformSet("REBOOT_DEVICE")
   }
 
   /** Connect WAN. */
   suspend fun wanConnect(username: String, password: String) {
     ensureLoggedIn(username, password)
-    client.post("$baseUrl/goform/goform_set_cmd_process") {
-      setBody("isTest=false&goformId=wan_connect")
-      contentType(ContentType.Application.FormUrlEncoded)
-    }
+    goformSet("wan_connect")
   }
 
   /** Disconnect WAN. */
   suspend fun wanDisconnect(username: String, password: String) {
     ensureLoggedIn(username, password)
-    client.post("$baseUrl/goform/goform_set_cmd_process") {
-      setBody("isTest=false&goformId=wan_disconnect")
-      contentType(ContentType.Application.FormUrlEncoded)
-    }
+    goformSet("wan_disconnect")
   }
 
   /** Execute an arbitrary GET command. */
   suspend fun queryRaw(cmd: String): String {
-    return client.post("$baseUrl/goform/goform_get_cmd_process") {
-      setBody("isTest=false&cmd=$cmd&multi_data=1")
-      contentType(ContentType.Application.FormUrlEncoded)
-    }.bodyAsText()
+    return goformGet(cmd)
   }
 
   fun close() {
     client.close()
+  }
+
+  private suspend fun loadBandLockSnapshot(): BandLockSnapshot {
+    val currentInfo = goformSet("TZ_GET_LOCK_BAND")
+    val onceData = goformGet("tz_wcdma_bands,tz_tds_bands,tz_lock_wcdma_band,tz_lock_tds_band")
+    return BandLockCodec.parseSnapshot(currentInfo, onceData)
+  }
+
+  private fun validateBandLock(
+    snapshot: BandLockSnapshot,
+    expectedEnabled: Boolean,
+    expectedBands: Set<Int>,
+  ) {
+    if (!expectedEnabled) {
+      if (snapshot.enabled) throw IOException("Router did not disable band lock")
+      return
+    }
+
+    val normalizedBands = expectedBands.toSortedSet()
+    if (!snapshot.enabled || snapshot.selectedBands.toSet() != normalizedBands) {
+      throw IOException("Router did not apply requested band lock")
+    }
+  }
+
+  private suspend fun goformGet(cmd: String): String {
+    return postForm(
+      path = "/goform/goform_get_cmd_process",
+      fields = mapOf(
+        "isTest" to "false",
+        "cmd" to cmd,
+        "multi_data" to "1",
+      ),
+    )
+  }
+
+  private suspend fun goformSet(
+    goformId: String,
+    fields: Map<String, String> = emptyMap(),
+  ): String {
+    val formFields = linkedMapOf(
+      "isTest" to "false",
+      "goformId" to goformId,
+    )
+    formFields.putAll(fields)
+
+    return postForm(
+      path = "/goform/goform_set_cmd_process",
+      fields = formFields,
+    )
+  }
+
+  private suspend fun postForm(
+    path: String,
+    fields: Map<String, String>,
+  ): String {
+    val body = Parameters.build {
+      fields.forEach { (key, value) ->
+        append(key, value)
+      }
+    }.formUrlEncode()
+
+    return client.post("$baseUrl$path") {
+      setBody(body)
+      contentType(ContentType.Application.FormUrlEncoded)
+    }.bodyAsText()
   }
 
   companion object {

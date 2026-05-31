@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Wifi
@@ -68,6 +69,7 @@ import com.example.globerouter.ui.main.DashboardUiState
 @Composable
 fun DashboardScreen(
   onLogout: () -> Unit,
+  onBandLock: () -> Unit,
   modifier: Modifier = Modifier,
   viewModel: DashboardViewModel = viewModel { DashboardViewModel() },
 ) {
@@ -95,6 +97,7 @@ fun DashboardScreen(
         onReboot = { viewModel.reboot() },
         onWanConnect = { viewModel.wanConnect() },
         onWanDisconnect = { viewModel.wanDisconnect() },
+        onBandLock = onBandLock,
         onLogout = onLogout,
         modifier = modifier,
       )
@@ -132,6 +135,7 @@ private fun DashboardContent(
   onReboot: () -> Unit,
   onWanConnect: () -> Unit,
   onWanDisconnect: () -> Unit,
+  onBandLock: () -> Unit,
   onLogout: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -165,7 +169,7 @@ private fun DashboardContent(
       StatusCard(data)
       SignalCard(data)
       UsageCard(data)
-      QuickActionsCard(data.connected, onReboot, onWanConnect, onWanDisconnect)
+      QuickActionsCard(data.connected, onReboot, onWanConnect, onWanDisconnect, onBandLock)
       BottomInfo(data)
     }
   }
@@ -344,6 +348,7 @@ private fun QuickActionsCard(
   onReboot: () -> Unit,
   onWanConnect: () -> Unit,
   onWanDisconnect: () -> Unit,
+  onBandLock: () -> Unit,
 ) {
   Card(
     modifier = Modifier.fillMaxWidth(),
@@ -368,6 +373,11 @@ private fun QuickActionsCard(
             Spacer(Modifier.width(4.dp))
             Text("Connect")
           }
+        }
+        OutlinedButton(onClick = onBandLock) {
+          Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+          Spacer(Modifier.width(4.dp))
+          Text("Band Lock")
         }
         OutlinedButton(onClick = onReboot) {
           Text("Reboot")

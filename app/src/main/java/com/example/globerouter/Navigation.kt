@@ -9,11 +9,13 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import com.example.globerouter.data.CredentialStore
 import com.example.globerouter.data.models.Credentials
+import com.example.globerouter.ui.band.BandLockScreen
 import com.example.globerouter.ui.dashboard.DashboardScreen
 import com.example.globerouter.ui.login.LoginScreen
 
 private object LoginRoute
 private object DashboardRoute
+private object BandLockRoute
 
 @Composable
 fun MainNavigation(modifier: Modifier = Modifier) {
@@ -41,7 +43,11 @@ fun MainNavigation(modifier: Modifier = Modifier) {
               backStack.clear()
               backStack.add(LoginRoute)
             },
+            onBandLock = { backStack.add(BandLockRoute) },
           )
+        }
+        is BandLockRoute -> NavEntry(key) {
+          BandLockScreen(onBack = { backStack.removeLastOrNull() })
         }
         else -> error("Unknown route: $key")
       }

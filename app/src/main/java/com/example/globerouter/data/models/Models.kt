@@ -128,44 +128,6 @@ private fun String?.isUsableWanIp(): Boolean {
   return value != "0.0.0.0" && value != "::" && value != "—"
 }
 
-/** Band lock info from TZ_GET_LOCK_BAND. */
-@Serializable
-data class BandLockResponse(
-  val band_state: String? = null,
-  val band1: String? = null,
-  val band3: String? = null,
-  val band5: String? = null,
-  val band7: String? = null,
-  val band8: String? = null,
-  val band28: String? = null,
-  val band40: String? = null,
-  val band41: String? = null,
-)
-
-data class BandLockInfo(
-  val enabled: Boolean,
-  val bands: List<Int>,
-) {
-  companion object {
-    fun from(raw: BandLockResponse): BandLockInfo {
-      val bands = listOfNotNull(
-        raw.band1?.takeIf { it == "1" }?.let { 1 },
-        raw.band3?.takeIf { it == "1" }?.let { 3 },
-        raw.band5?.takeIf { it == "1" }?.let { 5 },
-        raw.band7?.takeIf { it == "1" }?.let { 7 },
-        raw.band8?.takeIf { it == "1" }?.let { 8 },
-        raw.band28?.takeIf { it == "1" }?.let { 28 },
-        raw.band40?.takeIf { it == "1" }?.let { 40 },
-        raw.band41?.takeIf { it == "1" }?.let { 41 },
-      )
-      return BandLockInfo(
-        enabled = raw.band_state == "yes",
-        bands = bands.sorted(),
-      )
-    }
-  }
-}
-
 /** Login response from the router. */
 @Serializable
 data class LoginResponse(
