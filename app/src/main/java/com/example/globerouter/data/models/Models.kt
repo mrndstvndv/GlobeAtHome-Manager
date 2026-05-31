@@ -73,7 +73,7 @@ data class DashboardData(
       val sinr = raw.lte_sinr?.toFloatOrNull() ?: raw.sinr?.toFloatOrNull()
 
       return DashboardData(
-        connected = raw.modem_main_state == "0" && raw.ppp_status == "Connected",
+        connected = raw.isWanConnected(),
         networkType = raw.network_type ?: "—",
         wanIp = raw.wan_ipaddr ?: "—",
         sessionDuration = formatSeconds(raw.realtime_time?.toLongOrNull()),
@@ -106,6 +106,26 @@ data class DashboardData(
       }
     }
   }
+}
+
+internal fun RouterResponse.isWanConnected(): Boolean {
+  val pppStatus = ppp_status?.trim().orEmpty()
+  if (pppStatus.isNotEmpty()) return pppStatus.isConnectedStatus()
+
+  return wan_ipaddr.isUsableWanIp() || ipv6_wan_ipaddr.isUsableWanIp()
+}
+
+private fun String.isConnectedStatus(): Boolean {
+  val normalized = trim().lowercase()
+  if (normalized.isBlank()) return false
+  if ("disconnect" in normalized) return false
+  return "connected" in normalized
+}
+
+private fun String?.isUsableWanIp(): Boolean {
+  val value = this?.trim().orEmpty()
+  if (value.isBlank()) return false
+  return value != "0.0.0.0" && value != "::" && value != "—"
 }
 
 /** Band lock info from TZ_GET_LOCK_BAND. */
