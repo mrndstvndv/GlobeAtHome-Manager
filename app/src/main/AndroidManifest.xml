@@ -11,7 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:windowSoftInputMode="adjustResize"
-        android:theme="@style/Theme.GlobeRouter">
+        android:theme="@style/Theme.GAHManager">
         <activity
             android:name=".MainActivity"
             android:exported="true">

@@ -5,10 +5,10 @@ plugins {
 }
 
 android {
-    namespace = "com.example.globerouter"
+    namespace = "com.mrndstvndv.gahmanager"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.example.globerouter"
+        applicationId = "com.mrndstvndv.gahmanager"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
