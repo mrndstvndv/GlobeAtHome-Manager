@@ -21,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Refresh
@@ -96,7 +95,6 @@ fun DashboardScreen(
         onRefresh = { viewModel.refresh() },
         onReboot = { viewModel.reboot() },
         onWanConnect = { viewModel.wanConnect() },
-        onWanDisconnect = { viewModel.wanDisconnect() },
         onBandLock = onBandLock,
         onLogout = onLogout,
         modifier = modifier,
@@ -134,7 +132,6 @@ private fun DashboardContent(
   onRefresh: () -> Unit,
   onReboot: () -> Unit,
   onWanConnect: () -> Unit,
-  onWanDisconnect: () -> Unit,
   onBandLock: () -> Unit,
   onLogout: () -> Unit,
   modifier: Modifier = Modifier,
@@ -169,7 +166,7 @@ private fun DashboardContent(
       StatusCard(data)
       SignalCard(data)
       UsageCard(data)
-      QuickActionsCard(data.connected, onReboot, onWanConnect, onWanDisconnect, onBandLock)
+      QuickActionsCard(data.connected, onReboot, onWanConnect, onBandLock)
       BottomInfo(data)
     }
   }
@@ -360,7 +357,6 @@ private fun QuickActionsCard(
   connected: Boolean,
   onReboot: () -> Unit,
   onWanConnect: () -> Unit,
-  onWanDisconnect: () -> Unit,
   onBandLock: () -> Unit,
 ) {
   Card(
@@ -374,13 +370,7 @@ private fun QuickActionsCard(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
       ) {
-        if (connected) {
-          OutlinedButton(onClick = onWanDisconnect) {
-            Icon(Icons.Default.LinkOff, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Disconnect")
-          }
-        } else {
+        if (!connected) {
           Button(onClick = onWanConnect) {
             Icon(Icons.Default.Link, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))

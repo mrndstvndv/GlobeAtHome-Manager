@@ -30,7 +30,10 @@ fun MainNavigation(modifier: Modifier = Modifier) {
       when (key) {
         is LoginRoute -> NavEntry(key) {
           LoginScreen(
-            onLoginSuccess = { backStack.add(DashboardRoute) },
+            onLoginSuccess = {
+              backStack.clear()
+              backStack.add(DashboardRoute)
+            },
             credentialStore = store,
           )
         }
