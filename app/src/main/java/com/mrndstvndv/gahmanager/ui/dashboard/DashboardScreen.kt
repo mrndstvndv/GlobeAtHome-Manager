@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.NetworkCell
@@ -69,6 +70,7 @@ import com.mrndstvndv.gahmanager.ui.main.DashboardUiState
 fun DashboardScreen(
   onLogout: () -> Unit,
   onBandLock: () -> Unit,
+  onMessages: () -> Unit,
   modifier: Modifier = Modifier,
   viewModel: DashboardViewModel = viewModel { DashboardViewModel() },
 ) {
@@ -96,6 +98,7 @@ fun DashboardScreen(
         onReboot = { viewModel.reboot() },
         onWanConnect = { viewModel.wanConnect() },
         onBandLock = onBandLock,
+        onMessages = onMessages,
         onLogout = onLogout,
         modifier = modifier,
       )
@@ -133,6 +136,7 @@ private fun DashboardContent(
   onReboot: () -> Unit,
   onWanConnect: () -> Unit,
   onBandLock: () -> Unit,
+  onMessages: () -> Unit,
   onLogout: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -166,7 +170,14 @@ private fun DashboardContent(
       StatusCard(data)
       SignalCard(data)
       UsageCard(data)
-      QuickActionsCard(data.connected, onReboot, onWanConnect, onBandLock)
+      QuickActionsCard(
+        connected = data.connected,
+        unreadCount = data.smsUnreadCount,
+        onReboot = onReboot,
+        onWanConnect = onWanConnect,
+        onBandLock = onBandLock,
+        onMessages = onMessages
+      )
       BottomInfo(data)
     }
   }
@@ -355,9 +366,11 @@ private fun SpeedBox(label: String, value: String, color: Color) {
 @OptIn(ExperimentalLayoutApi::class)
 private fun QuickActionsCard(
   connected: Boolean,
+  unreadCount: Int?,
   onReboot: () -> Unit,
   onWanConnect: () -> Unit,
   onBandLock: () -> Unit,
+  onMessages: () -> Unit,
 ) {
   Card(
     modifier = Modifier.fillMaxWidth(),
@@ -381,6 +394,16 @@ private fun QuickActionsCard(
           Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
           Spacer(Modifier.width(4.dp))
           Text("Band Lock")
+        }
+        OutlinedButton(onClick = onMessages) {
+          Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
+          Spacer(Modifier.width(4.dp))
+          val label = if (unreadCount != null && unreadCount > 0) {
+            "Messages ($unreadCount)"
+          } else {
+            "Messages"
+          }
+          Text(label)
         }
         OutlinedButton(onClick = onReboot) {
           Text("Reboot")

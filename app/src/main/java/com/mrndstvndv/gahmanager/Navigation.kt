@@ -12,10 +12,12 @@ import com.mrndstvndv.gahmanager.data.models.Credentials
 import com.mrndstvndv.gahmanager.ui.band.BandLockScreen
 import com.mrndstvndv.gahmanager.ui.dashboard.DashboardScreen
 import com.mrndstvndv.gahmanager.ui.login.LoginScreen
+import com.mrndstvndv.gahmanager.ui.messages.MessagesScreen
 
 private object LoginRoute
 private object DashboardRoute
 private object BandLockRoute
+private object MessagesRoute
 
 @Composable
 fun MainNavigation(modifier: Modifier = Modifier) {
@@ -47,10 +49,14 @@ fun MainNavigation(modifier: Modifier = Modifier) {
               backStack.add(LoginRoute)
             },
             onBandLock = { backStack.add(BandLockRoute) },
+            onMessages = { backStack.add(MessagesRoute) },
           )
         }
         is BandLockRoute -> NavEntry(key) {
           BandLockScreen(onBack = { backStack.removeLastOrNull() })
+        }
+        is MessagesRoute -> NavEntry(key) {
+          MessagesScreen(onBack = { backStack.removeLastOrNull() })
         }
         else -> error("Unknown route: $key")
       }

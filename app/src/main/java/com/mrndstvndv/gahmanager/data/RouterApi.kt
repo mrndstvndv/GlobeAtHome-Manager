@@ -6,6 +6,8 @@ import com.mrndstvndv.gahmanager.data.models.DashboardData
 import com.mrndstvndv.gahmanager.data.models.LoginResponse
 import com.mrndstvndv.gahmanager.data.models.RadioStatus
 import com.mrndstvndv.gahmanager.data.models.RouterResponse
+import com.mrndstvndv.gahmanager.data.models.SmsMessage
+import com.mrndstvndv.gahmanager.data.models.SmsResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
@@ -77,7 +79,8 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
         "sta_count,m_sta_count,SSID1,m_SSID," +
         "realtime_tx_thrpt,realtime_rx_thrpt,realtime_tx_bytes,realtime_rx_bytes,realtime_time," +
         "monthly_tx_bytes,monthly_rx_bytes,monthly_time," +
-        "cr_version,hardware_version,mac_address,msisdn,web_signal,sim_status,simcard_roam"
+        "cr_version,hardware_version,mac_address,msisdn,web_signal,sim_status,simcard_roam," +
+        "sms_unread_count,sms_unread_num"
     )
     val response = json.decodeFromString<RouterResponse>(raw)
     return DashboardData.from(response)
@@ -181,6 +184,79 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
   suspend fun wanDisconnect(username: String, password: String) {
     ensureLoggedIn(username, password)
     goformSet("wan_disconnect")
+  }
+
+  /** Fetch list of SMS messages. */
+  suspend fun getMessages(
+    username: String,
+    password: String,
+    page: Int = 0,
+    dataPerPage: Int = 500,
+  ): List<SmsMessage> {
+    ensureLoggedIn(username, password)
+    val raw = postForm(
+      path = "/goform/goform_get_cmd_process",
+      fields = mapOf(
+        "isTest" to "false",
+        "cmd" to "sms_data_total",
+        "page" to page.toString(),
+        "data_per_page" to dataPerPage.toString(),
+        "mem_store" to "1",
+        "tags" to "10",
+        "order_by" to "order by id desc"
+      )
+    )
+    val response = json.decodeFromString<SmsResponse>(raw)
+    val messages = response.messages ?: emptyList()
+    return messages.sortedByDescending { it.id.toIntOrNull() ?: 0 }
+  }
+
+  /** Delete SMS messages by ID list. */
+  suspend fun deleteMessages(
+    username: String,
+    password: String,
+    ids: List<String>,
+  ) {
+    ensureLoggedIn(username, password)
+    goformSet(
+      goformId = "DELETE_SMS",
+      fields = mapOf(
+        "msg_id" to ids.joinToString(",")
+      )
+    )
+  }
+
+  /** Send an SMS message. */
+  suspend fun sendSms(
+    username: String,
+    password: String,
+    number: String,
+    content: String,
+  ): Boolean {
+    ensureLoggedIn(username, password)
+    val calendar = java.util.Calendar.getInstance()
+    val year = (calendar.get(java.util.Calendar.YEAR) % 100).toString().padStart(2, '0')
+    val month = (calendar.get(java.util.Calendar.MONTH) + 1).toString().padStart(2, '0')
+    val day = calendar.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
+    val hour = calendar.get(java.util.Calendar.HOUR_OF_DAY).toString().padStart(2, '0')
+    val minute = calendar.get(java.util.Calendar.MINUTE).toString().padStart(2, '0')
+    val second = calendar.get(java.util.Calendar.SECOND).toString().padStart(2, '0')
+    val timeStr = "$year;$month;$day;$hour;$minute;$second;+8"
+
+    val bytes = content.toByteArray(Charsets.UTF_16BE)
+    val hexContent = bytes.joinToString("") { "%02X".format(it) }
+
+    val rawResponse = goformSet(
+      goformId = "SEND_SMS",
+      fields = mapOf(
+        "Number" to number,
+        "sms_time" to timeStr,
+        "MessageBody" to hexContent,
+        "ID" to "-1",
+        "user_ip" to "192.168.254.10"
+      )
+    )
+    return "success" in rawResponse.lowercase() || "result\":\"0\"" in rawResponse
   }
 
   /** Execute an arbitrary GET command. */

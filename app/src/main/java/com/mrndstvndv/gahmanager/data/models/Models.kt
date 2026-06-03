@@ -44,6 +44,8 @@ data class RouterResponse(
   val msisdn: String? = null,
   val imei: String? = null,
   val loginfo: String? = null,
+  val sms_unread_count: String? = null,
+  val sms_unread_num: String? = null,
 )
 
 /** Parsed dashboard data derived from raw response. */
@@ -67,6 +69,7 @@ data class DashboardData(
   val ssid24: String,
   val ssid5: String,
   val firmware: String,
+  val smsUnreadCount: Int?,
 ) {
   companion object {
     fun from(raw: RouterResponse): DashboardData {
@@ -94,6 +97,7 @@ data class DashboardData(
         ssid24 = raw.SSID1 ?: "—",
         ssid5 = raw.m_SSID ?: "—",
         firmware = raw.cr_version ?: "—",
+        smsUnreadCount = (raw.sms_unread_num ?: raw.sms_unread_count)?.toIntOrNull(),
       )
     }
 
@@ -158,3 +162,58 @@ private fun String?.isUsableWanIp(): Boolean {
 data class LoginResponse(
   val result: String? = null,
 )
+
+/** SMS messages list wrapper response. */
+@Serializable
+data class SmsResponse(
+  val messages: List<SmsMessage>? = null,
+)
+
+/** Individual SMS message representation. */
+@Serializable
+data class SmsMessage(
+  val id: String,
+  val number: String,
+  val content: String,
+  val date: String? = null,
+  val sms_time: String? = null,
+  val tag: String? = null,
+) {
+  val decodedContent: String
+    get() = decodeSmsContent(content)
+
+  val displayTime: String
+    get() {
+      val rawTime = sms_time ?: date ?: return "—"
+      val parts = rawTime.split(';', ',')
+      if (parts.size >= 6) {
+        val year = parts[0].trim()
+        val month = parts[1].trim()
+        val day = parts[2].trim()
+        val hour = parts[3].trim()
+        val min = parts[4].trim()
+        return "20$year-$month-$day $hour:$min"
+      }
+      return rawTime.replace(";", " ").replace(",", " ").trim()
+    }
+
+  val isUnread: Boolean
+    get() = tag == "1"
+}
+
+private fun decodeSmsContent(rawContent: String): String {
+  if (rawContent.isBlank()) return ""
+  val clean = rawContent.trim()
+  val isHex = clean.length % 2 == 0 && clean.all { it in "0123456789abcdefABCDEF" }
+  if (!isHex) return rawContent
+
+  return try {
+    val bytes = ByteArray(clean.length / 2)
+    for (i in bytes.indices) {
+      bytes[i] = clean.substring(i * 2, i * 2 + 2).toInt(16).toByte()
+    }
+    String(bytes, Charsets.UTF_16BE)
+  } catch (e: Exception) {
+    rawContent
+  }
+}
