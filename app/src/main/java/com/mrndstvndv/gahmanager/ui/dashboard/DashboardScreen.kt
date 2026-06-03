@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -384,18 +385,27 @@ private fun QuickActionsCard(
         verticalArrangement = Arrangement.spacedBy(8.dp),
       ) {
         if (!connected) {
-          Button(onClick = onWanConnect) {
+          Button(
+            onClick = onWanConnect,
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+          ) {
             Icon(Icons.Default.Link, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
             Text("Connect")
           }
         }
-        OutlinedButton(onClick = onBandLock) {
+        OutlinedButton(
+          onClick = onBandLock,
+          contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        ) {
           Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
           Spacer(Modifier.width(4.dp))
           Text("Band Lock")
         }
-        OutlinedButton(onClick = onMessages) {
+        OutlinedButton(
+          onClick = onMessages,
+          contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        ) {
           Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
           Spacer(Modifier.width(4.dp))
           val label = if (unreadCount != null && unreadCount > 0) {
@@ -405,7 +415,10 @@ private fun QuickActionsCard(
           }
           Text(label)
         }
-        OutlinedButton(onClick = onReboot) {
+        OutlinedButton(
+          onClick = onReboot,
+          contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        ) {
           Text("Reboot")
         }
       }
