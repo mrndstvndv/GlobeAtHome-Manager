@@ -58,7 +58,7 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
 
   /** Check if the current session is still valid. */
   suspend fun checkSession(): Boolean {
-    val body = queryRaw("loginfo")
+    val body = goformGet("loginfo")
     return "\"loginfo\":\"ok\"" in body
   }
 
@@ -73,7 +73,7 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
   /** Fetch dashboard data (status + signal + traffic in one call). */
   suspend fun getDashboard(username: String, password: String): DashboardData {
     ensureLoggedIn(username, password)
-    val raw = queryRaw(
+    val raw = goformGet(
       "modem_main_state,network_type,lte_band,lte_plmn,lte_rsrq,lte_rssi1,lte_sinr," +
         "lte_pci,lte_enodebid,lte_cellid,wan_ipaddr,ppp_status," +
         "sta_count,m_sta_count,SSID1,m_SSID," +
@@ -89,14 +89,14 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
   /** Fetch just signal info. */
   suspend fun getSignal(username: String, password: String): RouterResponse {
     ensureLoggedIn(username, password)
-    val raw = queryRaw("lte_band,lte_rsrq,lte_rssi1,lte_sinr,lte_pci,lte_enodebid,lte_cellid,web_signal,network_type,simcard_roam")
+    val raw = goformGet("lte_band,lte_rsrq,lte_rssi1,lte_sinr,lte_pci,lte_enodebid,lte_cellid,web_signal,network_type,simcard_roam")
     return json.decodeFromString(raw)
   }
 
   /** Fetch just traffic stats. */
   suspend fun getTraffic(username: String, password: String): RouterResponse {
     ensureLoggedIn(username, password)
-    val raw = queryRaw(
+    val raw = goformGet(
       "realtime_tx_thrpt,realtime_rx_thrpt,realtime_tx_bytes,realtime_rx_bytes,realtime_time," +
         "monthly_tx_bytes,monthly_rx_bytes,monthly_time"
     )
@@ -106,7 +106,7 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
   /** Fast poll: signal + real-time traffic in one call (1s interval). */
   suspend fun getFastData(username: String, password: String): RouterResponse {
     ensureLoggedIn(username, password)
-    val raw = queryRaw(
+    val raw = goformGet(
       "lte_band,lte_rsrq,lte_rssi1,lte_sinr,lte_pci,lte_enodebid,lte_cellid," +
         "web_signal,network_type,simcard_roam," +
         "realtime_tx_thrpt,realtime_rx_thrpt,realtime_tx_bytes,realtime_rx_bytes,realtime_time"
@@ -117,7 +117,7 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
   /** Read current radio status. */
   suspend fun getRadioStatus(username: String, password: String): RadioStatus {
     ensureLoggedIn(username, password)
-    val raw = queryRaw("network_type,lte_band,web_signal")
+    val raw = goformGet("network_type,lte_band,web_signal")
     val response = json.decodeFromString<RouterResponse>(raw)
     return RadioStatus.from(response)
   }
@@ -259,11 +259,6 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
     return "success" in rawResponse.lowercase() || "result\":\"0\"" in rawResponse
   }
 
-  /** Execute an arbitrary GET command. */
-  suspend fun queryRaw(cmd: String): String {
-    return goformGet(cmd)
-  }
-
   fun close() {
     client.close()
   }
@@ -290,7 +285,7 @@ class RouterApi(private val routerIp: String = DEFAULT_IP) {
     }
   }
 
-  private suspend fun goformGet(cmd: String): String {
+  suspend fun goformGet(cmd: String): String {
     return postForm(
       path = "/goform/goform_get_cmd_process",
       fields = mapOf(

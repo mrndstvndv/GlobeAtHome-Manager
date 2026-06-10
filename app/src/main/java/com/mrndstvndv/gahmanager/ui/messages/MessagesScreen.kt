@@ -188,7 +188,6 @@ fun MessageItem(
               modifier = Modifier
                 .padding(end = 8.dp)
                 .size(8.dp)
-                .size(8.dp)
                 .align(Alignment.CenterVertically)
             )
           }

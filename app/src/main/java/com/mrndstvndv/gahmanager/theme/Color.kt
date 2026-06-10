@@ -10,8 +10,6 @@ val SignalPoor = Color(0xFFFF9800)       // Orange
 val SignalBad = Color(0xFFF44336)        // Red
 
 // Status colors
-val Connected = Color(0xFF4CAF50)
-val Disconnected = Color(0xFFF44336)
 val Wifi = Color(0xFF42A5F5)
 val Data = Color(0xFFAB47BC)
 

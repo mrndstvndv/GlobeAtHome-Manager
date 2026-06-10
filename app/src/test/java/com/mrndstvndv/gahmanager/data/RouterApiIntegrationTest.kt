@@ -81,7 +81,7 @@ class RouterApiIntegrationTest {
 
     for (field in smsFields) {
       try {
-        val rawResponse = api.queryRaw(field)
+        val rawResponse = api.goformGet(field)
         println("Field '$field' response: $rawResponse")
       } catch (e: Exception) {
         println("Field '$field' failed/unsupported: ${e.message}")
@@ -91,7 +91,7 @@ class RouterApiIntegrationTest {
     println("\n--- 🌐 Probing All Potential Custom GET Fields ---")
     val queryFields = "modem_main_state,network_type,lte_band,web_signal,wan_ipaddr,ppp_status,sta_count,msisdn,imei"
     try {
-      val raw = api.queryRaw(queryFields)
+      val raw = api.goformGet(queryFields)
       println("Raw response for standard status fields: $raw")
     } catch (e: Exception) {
       println("Failed standard status query: ${e.message}")

@@ -54,15 +54,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrndstvndv.gahmanager.data.models.DashboardData
-import com.mrndstvndv.gahmanager.theme.Connected
 import com.mrndstvndv.gahmanager.theme.Data
-import com.mrndstvndv.gahmanager.theme.Disconnected
 import com.mrndstvndv.gahmanager.theme.SignalBad
 import com.mrndstvndv.gahmanager.theme.SignalExcellent
 import com.mrndstvndv.gahmanager.theme.SignalFair
 import com.mrndstvndv.gahmanager.theme.SignalGood
 import com.mrndstvndv.gahmanager.theme.SignalPoor
 import com.mrndstvndv.gahmanager.theme.Wifi
+import com.mrndstvndv.gahmanager.ui.formatServingBand
+import com.mrndstvndv.gahmanager.ui.formatSignalBars
 import com.mrndstvndv.gahmanager.ui.main.DashboardViewModel
 import com.mrndstvndv.gahmanager.ui.main.DashboardUiState
 
@@ -198,7 +198,7 @@ private fun StatusCard(data: DashboardData) {
         modifier = Modifier
           .size(16.dp)
           .clip(CircleShape)
-          .background(if (data.connected) Connected else Disconnected),
+          .background(if (data.connected) SignalExcellent else SignalBad),
       )
       Spacer(Modifier.width(12.dp))
 
@@ -208,7 +208,7 @@ private fun StatusCard(data: DashboardData) {
           Spacer(Modifier.width(8.dp))
           Text(
             if (data.connected) "Connected" else "Disconnected",
-            color = if (data.connected) Connected else Disconnected,
+            color = if (data.connected) SignalExcellent else SignalBad,
             style = MaterialTheme.typography.labelMedium,
           )
         }
@@ -285,13 +285,7 @@ private fun signalColor(fraction: Float): Color = when {
   else -> SignalBad
 }
 
-private fun formatServingBand(band: Int?): String {
-  return band?.let { "B$it" } ?: "—"
-}
 
-private fun formatSignalBars(webSignal: Int?): String {
-  return webSignal?.toString() ?: "—"
-}
 
 @Composable
 private fun UsageCard(data: DashboardData) {

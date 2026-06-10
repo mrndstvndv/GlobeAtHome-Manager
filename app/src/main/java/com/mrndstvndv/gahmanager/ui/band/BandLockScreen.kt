@@ -44,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrndstvndv.gahmanager.ui.formatServingBand
+import com.mrndstvndv.gahmanager.ui.formatSignalBars
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -318,10 +320,4 @@ private fun formatBands(bands: Collection<Int>): String {
   return bands.sorted().joinToString(separator = ", ") { band -> "B$band" }
 }
 
-private fun formatServingBand(band: Int?): String {
-  return band?.let { "B$it" } ?: "—"
-}
 
-private fun formatSignalBars(webSignal: Int?): String {
-  return webSignal?.toString() ?: "—"
-}
